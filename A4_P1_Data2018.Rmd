@@ -29,10 +29,15 @@ The goal of this assignment is to first familiarize you with heart rate, and res
 conv <- read.csv("Study3_G1_T3_Conversation.csv")
 sync <- read.csv("Study3_G1_T1_Synchronous.csv")
 turn <- read.csv("Study3_G1_T2_TurnTaking.csv")
+g7 <- read.csv("Study3_G7_T3_Synchronous.csv")
+g6 <- read.csv("Study3_G6_T2_Synchronous.csv")
 
 conv <- rename.vars(conv, "TimeMs", "time")
 sync <- rename.vars(sync, "TimeMs", "time")
 turn <- rename.vars(turn, "TimeMs", "time")
+g7 <- rename.vars(g7, "TimeMs", "time")
+g6 <- rename.vars(g6, "TimeMs", "time")
+
 
 ```
 
@@ -123,6 +128,22 @@ turn_1 <- turn %>%
                    Resp1 = mean(Resp1,na.rm=T), 
                    Resp2 = mean(Resp2,na.rm=T))
 
+g7_1 <- g7 %>%
+  group(n = 100, method = 'greedy') %>% 
+  dplyr::summarise(time = mean(time,na.rm=T), 
+                   HR1 = mean(HR1,na.rm=T), 
+                   HR2 = mean(HR2,na.rm=T), 
+                   Resp1 = mean(Resp1,na.rm=T), 
+                   Resp2 = mean(Resp2,na.rm=T))
+
+g6_1 <- g6 %>%
+  group(n = 100, method = 'greedy') %>% 
+  dplyr::summarise(time = mean(time,na.rm=T), 
+                   HR1 = mean(HR1,na.rm=T), 
+                   HR2 = mean(HR2,na.rm=T), 
+                   Resp1 = mean(Resp1,na.rm=T), 
+                   Resp2 = mean(Resp2,na.rm=T))
+
 ```
 
 
@@ -142,6 +163,16 @@ turn_1$HR1 <- scale(turn_1$HR1)
 turn_1$HR2 <- scale(turn_1$HR2)
 turn_1$Resp1 <- scale(turn_1$Resp1)
 turn_1$Resp2 <- scale(turn_1$Resp2)
+
+g7_1$HR1 <- scale(g7_1$HR1)
+g7_1$HR2 <- scale(g7_1$HR2)
+g7_1$Resp1 <- scale(g7_1$Resp1)
+g7_1$Resp2 <- scale(g7_1$Resp2)
+
+g6_1$HR1 <- scale(g6_1$HR1)
+g6_1$HR2 <- scale(g6_1$HR2)
+g6_1$Resp1 <- scale(g6_1$Resp1)
+g6_1$Resp2 <- scale(g6_1$Resp2)
 ```
 
 MORE PLOTS:
@@ -228,6 +259,10 @@ sync_1$Resp2 <- cillitbang(sync_1$Resp2, threshold_resp)
 
 turn_1$Resp1 <- cillitbang(turn_1$Resp1, threshold_resp)
 turn_1$Resp2 <- cillitbang(turn_1$Resp2, threshold_resp)
+
+g6_1$Resp1 <- cillitbang(g6_1$Resp1, threshold_resp)
+g6_1$Resp2 <- cillitbang(g6_1$Resp2, threshold_resp)
+
 ```
 
 
@@ -242,6 +277,9 @@ sync_1$HR2 <- cillitbang(sync_1$HR2, threshold_hr)
 
 turn_1$HR1 <- cillitbang(turn_1$HR1, threshold_hr)
 turn_1$HR2 <- cillitbang(turn_1$HR2, threshold_hr)
+
+g6_1$HR1 <- cillitbang(g6_1$HR1, threshold_hr)
+g6_1$HR2 <- cillitbang(g6_1$HR2, threshold_hr)
 
 ```
 
@@ -718,8 +756,42 @@ for (g in seq(unique(all_dat$group))){ #loop through all the groups
   }
 }
 
+```
+
+
+```{r}
+
+surPair_rqa$study = "Study3"
+surPair_rqa$group_trial = NA
+surPair_rqa$trial = NA
+
+sur_hr <- select(surPair_rqa, c(RR.HR, DET.HR, NRLINE.HR, maxL.HR, L.HR, ENTR.HR, rENTR.HR,  LAM.HR, TT.HR, condition, group1, group2, trial, group_trial, study))
+
+sur_Resp <- select(surPair_rqa, c(RR.Resp, DET.Resp, NRLINE.Resp, maxL.Resp, L.Resp, ENTR.Resp, rENTR.Resp,  LAM.Resp, TT.Resp, condition, group1, group2, trial, group_trial, study))
+
+sur_hr <- rename.vars(sur_hr, c('RR.HR', 'DET.HR','NRLINE.HR', 'maxL.HR', 'L.HR', 'ENTR.HR','rENTR.HR', 'LAM.HR', 'TT.HR'), c('RR', 'DET','NRLINE','LMAX','L','ENTR','rENTR','LAM','TT'))
+
+sur_Resp <- rename.vars(sur_Resp, c('RR.Resp', 'DET.Resp', 'NRLINE.Resp', 'maxL.Resp', 'L.Resp', 'ENTR.Resp', 'rENTR.Resp', 'LAM.Resp', 'TT.Resp'), c('RR','DET','NRLINE','LMAX','L','ENTR','rENTR','LAM','TT'))
+
+crqa_df_hr$Comparison = "regular"
+crqa_df_hr_shuf$Comparison = "shuffled"
+sur_hr$Comparison <- "surrogate"
+
+crqa_df_resp$Comparison = "regular"
+crqa_df_resp_shuf$Comparison = "shuffled"
+sur_Resp$Comparison <- "surrogate"
+
+sur_hr$group = sur_hr$group1
+sur_hr = select(sur_hr, -c(group1, group2))
+
+sur_Resp$group = sur_Resp$group1
+sur_Resp = select(sur_Resp, -c(group1, group2))
+
+all_crqa_hr <- rbind(crqa_df_hr, crqa_df_hr_shuf, sur_hr)
+all_crqa_resp <- rbind(crqa_df_resp, crqa_df_resp_shuf, sur_Resp)
 
 ```
+
 
 
 ```{r}
@@ -740,6 +812,53 @@ t.test(crqa_df_resp$RR, results_sur$RR.Resp)
  
 
 ```{r}
+#lgM = Maximum lag
+#radius span = 2?     increasing radius step means smaller steps
+#radius sample = 10?  number of radius points within the steps to be sampled
+
+# Finding the optimal parameters:
+par = list(lgM = 50, steps = seq(1, 6, 1), radiusspan = 100, radiussample = 40, normalize = 0, rescale = 0, mindiagline = 2, minvertline = 2, tw = 0, whiteline = F, recpt = F, fnnpercent = 10, typeami = "mindip")
+
+#ans = optimizeParam(x1, x2, par, min.rec = 3.5, max.rec = 4.5)
+
+# Choose a common value for delay, emb.dim and radius
+results = crqa(g7_1$HR1, g6_1$HR2, delay = optdelay_hr, embed = optemddim_hr, radius = optradius_hr, normalize = 0, rescale = 0, mindiagline = 2, minvertline = 2)
+
+# Represent the plot:
+RP = results$RP
+RP = matrix(as.numeric(RP), nrow = ncol(RP))
+cols = c("white","blue4")
+image(RP, xlab = "", ylab = "", col = cols)
+
+# Explore the lags of coordination:
+Profile = drpdfromts(g7_1$HR1, g6_1$HR2, datatype = 'continuous', ws=50, radius=radius)
+timecourse = round( seq(-5000,5000,100)/1000, digit = 1)
+maxlag = Profile$maxlag/1000
+profile = Profile$profile*100
+Prof = data.frame(profile)
+
+# Final plot
+ggplot(Prof, aes(timecourse,profile))+geom_line()+ geom_vline(xintercept = timecourse[maxlag], colour='red')
+
+```
+
+
+
+```{r}
+
+ggplot(all_crqa_hr, aes(Comparison, RR)) + 
+  geom_bar(stat = "summary", width = 0.5) +
+  geom_errorbar(stat = "summary", fun.data = mean_cl_boot, width = 0.15, colour = "Black")
+
+ggplot(all_crqa_resp, aes(Comparison, RR)) + 
+  geom_bar(stat = "summary", width = 0.5) +
+  geom_errorbar(stat = "summary", fun.data = mean_cl_boot, width = 0.15, colour = "Black")
+
+
+model_comp <- lm(RR ~ Comparison, all_crqa_resp)
+summary(model_comp)
+
+
 
 model_hr <- lmer(RR ~ condition + (1|group), crqa_df_hr)
 summary(model_hr)
@@ -769,6 +888,8 @@ ggplot(crqa_df_hr, aes()) +
   geom_text(check_overlap = T, position =  position_jitter(height = 2))+
   ggtitle("Lineplot of semantic distance (trial by trial)")
 
+mean(crqa_df_hr_shuf$RR)
+
 ```
 
 
@@ -778,6 +899,9 @@ ggplot(crqa_df_hr, aes()) +
  
 
 ```{r}
+
+
+
 
 ```
 
@@ -927,6 +1051,7 @@ if (i == 1){
     crqa_df_hr_shuf <- rbind(crqa_df_hr_shuf, temp_df)
   }
 }
+
 ```
 
 
