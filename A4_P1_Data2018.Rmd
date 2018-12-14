@@ -47,7 +47,6 @@ g6 <- rename.vars(g6, "TimeMs", "time")
 
 PLOTS:
 ```{r, plotting}
-
 ### Respiration plots for all three conditions
 resp_conv <- ggplot(conv, aes(time, Resp1)) + 
   geom_line(aes(time, Resp1), color = "#4D6C95") +
@@ -283,7 +282,6 @@ g6_1$HR2 <- cillitbang(g6_1$HR2, threshold_hr)
 
 ```
 
-
 - Can you eye-ball which condition if any displays more physiological coordination?
 - Run crqa on heart rate and respiration data (find parameters, run crqa)
 
@@ -305,7 +303,7 @@ par_sync_hr <- optimizeParam(na.omit(sync_1$HR1), na.omit(sync_1$HR2), par, min.
 par_turn_hr <- optimizeParam(na.omit(turn_1$HR1), na.omit(turn_1$HR2), par, min.rec = 2, max.rec = 5)
 
 # Choose a common value for delay, emb.dim and radius
-results = crqa(g7_conv_1$Resp1, g7_conv_1$Resp2, delay = delay, embed = emddim, radius = radius, normalize = 0, rescale = 0, mindiagline = 2, minvertline = 2)
+#results = crqa(conv_1$Resp1, conv_1$Resp2, delay = delay, embed = emddim, radius = radius, normalize = 0, rescale = 0, mindiagline = 2, minvertline = 2)
 ```
 
 
@@ -476,7 +474,6 @@ vanish = function(filename, graphs = T, bangbycillit = T){
   return(df)
 }
 
-
 #Trying out the function (with jomfrurejsen)
 #titanic = preproz("Study2_G5_T3_Conversation.csv")
 #titanic = bind_rows(testout)
@@ -492,6 +489,7 @@ all_preprocessed = bind_rows(all_preprocessed)
 ```{r, excluding troublesome data}
 newdata <- all_preprocessed[!(all_preprocessed$condition=="Synchronous" & all_preprocessed$group=="G9"),]
 #write.csv(newdata, "data_exclusive.csv")
+#newdata <- read.csv("data_exclusive.csv")
 ```
 
 
@@ -709,7 +707,8 @@ all_crqa_resp <- rbind(crqa_df_resp, crqa_df_resp_shuf, sur_Resp)
 
 
 ```{r}
-results_sur <- na.omit(surPair_rqa)
+results_sur <- surPair_rqa[-c(23, 24) ]
+results_sur <- na.omit(results_sur)
 
 #t-test for heart rate
 t.test(crqa_df_hr$RR, results_sur$RR.HR)
@@ -746,13 +745,13 @@ RP = matrix(as.numeric(RP), nrow = ncol(RP))
 cols = c("white","blue4")
 image(RP, xlab = "", ylab = "", col = cols)
 
-RP1 = results1$RP1
-RP1 = matrix(as.numeric(RP1), nrow = ncol(RP1))
+RP1 = results1$RP
+RP1 = matrix(as.numeric(RP), nrow = ncol(RP))
 cols1 = c("white","blue4")
 image(RP1, xlab = "", ylab = "", col = cols1)
 
 # Explore the lags of coordination:
-Profile = drpdfromts(g7_1$HR1, g6_1$HR2, datatype = 'continuous', ws=50, radius=radius)
+Profile = drpdfromts(g7_1$HR1, g6_1$HR2, datatype = 'continuous', ws=50, radius=optradius_hr)
 timecourse = round( seq(-5000,5000,100)/1000, digit = 1)
 maxlag = Profile$maxlag/1000
 profile = Profile$profile*100
